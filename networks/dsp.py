@@ -165,7 +165,7 @@ class DAInput(nn.Module):
         The DA input network: propagates information over DA layer
     """
 
-    def __init__(self, config, n_blk=2):
+    def __init__(self, config, n_blk=2): # n_blk：block层数
         super(DAInput, self).__init__()
         n_map = config["n_da"]
         norm = "GN"
@@ -994,7 +994,7 @@ class DSP(nn.Module):
         actors, actor_idcs, actor_ctrs = gather_actor(gpu(data['TRAJS_OBS'], device=self.device),
                                                       gpu(data['PAD_OBS'], device=self.device),
                                                       gpu(data['DT'], device=self.device))
-        # * DA
+        # * DA 生成DA图层
         graph_da = gather_graph_da(to_long(gpu(data['MLG_DA'], device=self.device)))
         # * LS
         graph_ls = gather_graph_ls(to_long(gpu(data['MLG_LS'], device=self.device)))

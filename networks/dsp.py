@@ -767,6 +767,9 @@ class GraphAggregationBlock(nn.Module):
 
 
 class GodaClassifierDaOnly(nn.Module):
+    """
+    只对DA层进行解码
+    """
     def __init__(self, config):
         super(GodaClassifierDaOnly, self).__init__()
         n_map = config["n_da"]
@@ -785,7 +788,7 @@ class GodaClassifierDaOnly(nn.Module):
         # feat = self.dropout(feat)
 
         feat = self.fc_3(feat)
-        out = torch.sigmoid_(feat).view(-1)
+        out = torch.sigmoid_(feat).view(-1) # sigmoid结尾，一定是有个分数的
         return out
 
 
@@ -1051,6 +1054,21 @@ class DSP(nn.Module):
         return feat
 
     def decode_goal_and_traj(self, seq_ids, feat_da, graph_da, actors, actor_idcs, goal_gt):
+        """
+        解码器代码
+
+        Args:
+            seq_ids:道路序列号（不确定）
+            feat_da:fuse_ls_to_da的特征
+            graph_da:DA图层
+            actors:actors特征（经过ls2actor处理后，再经过actor2actor处理后的特征）
+            actor_idcs:agent序号
+            goal_gt:
+            others：ctrs——center of lane node，
+
+        Returns:
+
+        """
         batch_size = len(graph_da['ctrs'])
         agent_idcs = torch.LongTensor([idcs[0] for idcs in actor_idcs])
         agent_feat = actors[agent_idcs]
@@ -1058,12 +1076,13 @@ class DSP(nn.Module):
         goda_cls = self.goda_classifier(feat_da)
 
         DEFAULT_GODA_NUM = 200
-        goda_score = []
-        goda_coord = []
-        goda_feat = []
+        goda_score = []  # Q
+        goda_coord = []  # K
+        goda_feat = []  # V
+        # 给每一个“DA图层”的点打分
         for i in range(batch_size):
             scores = goda_cls[graph_da['idcs'][i]]
-            _, idcs = torch.sort(scores, descending=True)
+            _, idcs = torch.sort(scores, descending=True) # 由大到小排序
             assert len(idcs) > DEFAULT_GODA_NUM, 'Invalid goda number'
 
             idcs = idcs[:DEFAULT_GODA_NUM]
@@ -1123,3 +1142,4 @@ class DSP(nn.Module):
         post_out['prob_pred'] = prob_pred
 
         return post_out
+# test
